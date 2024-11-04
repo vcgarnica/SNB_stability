@@ -224,7 +224,7 @@ stability_final = data %>%
   left_join(WMAR_INC) %>%
   left_join(T_50) %>%
   select(-model,-y0,-r) %>%
-  mutate(omega = omega*100) # transform omega to match the 
+  mutate(omega = omega*10) # transform omega to match the 
 
 stability_final = stability_final %>% 
   mutate_at(vars(SITE,BLOCK,CULT,PLOT,TRT,EU), as.factor) %>%

@@ -33,40 +33,45 @@ mean_function = function(correlation_matrix) {
     filter(Value != 1)
 }
 
-type_b_plot = function(correlation_matrix, var_name) {
+type_b_plot_upper_triangle = function(correlation_matrix, var_name) {
   heatmap_df = as.data.frame(correlation_matrix)
   heatmap_df$Row = rownames(heatmap_df)
-  heatmap_df_long = reshape2::melt(heatmap_df, id.vars = "Row", variable.name = "Column", value.name = "Value")
+
+  heatmap_df_long = melt(heatmap_df, id.vars = "Row", variable.name = "Column", value.name = "Value")
   
-  eclid=hclust(dist(1-correlation_matrix),method = "complete")
-  ordered_labels=eclid$labels[eclid$order]
+
+  eclid = hclust(dist(1 - correlation_matrix), method = "complete")
+  ordered_labels = eclid$labels[eclid$order]
   
-  heatmap_df_long=heatmap_df_long %>%
+  heatmap_df_long = heatmap_df_long %>%
     mutate(Row = factor(Row, levels = ordered_labels),
            Column = factor(Column, levels = ordered_labels))
   
-  heatmap_df_long$VAR=var_name
+
+  heatmap_df_long = heatmap_df_long %>%
+    filter(as.numeric(Row) < as.numeric(Column))
+ 
+  heatmap_df_long$VAR = var_name
   
+
   ggplot(heatmap_df_long, aes(x = Row, y = Column, fill = Value, label = round(Value, 2))) +
     geom_tile(color = "white") +
-    geom_tile(data = filter(heatmap_df_long, Row == Column), fill = "white") +
-    scale_fill_gradientn(colors = c("#075AFF", "#FFFFCC", "#FF0000"),
+    scale_fill_gradientn(colors = c("#2C7BB6", "#FFFFBF", "#D7191C"),
                          values = scales::rescale(c(-1, 1)),
                          breaks = c(-1, -0.5, 0, 0.5, 1),
                          limits = c(-1, 1),
                          na.value = "white") +
-    geom_text(color = "white", size = 2.5, fontface = "bold") +
-    facet_grid(cols = vars(VAR), labeller = label_parsed)+
+    geom_text(color = "gray30", size = 2.3, fontface = "bold") +
     theme_bw() +
     theme(axis.text.x = element_text(size = 11, angle = 45, hjust = 1),
           axis.text.y = element_text(size = 11),
-          legend.position = "none",
-          strip.background = element_blank(),
+          legend.position = "right",
           axis.title = element_blank(),
           plot.title = element_text(size = 15),
           strip.text = element_text(size = 15, hjust = 0)) +
     labs(fill = "Correlation")
 }
+
 
 
 optimize_join = function(data, var_name) {
@@ -111,23 +116,19 @@ write.csv(expvar_data, "results/exp_var.csv", na = "")
 
 ### Type B cultivar correlations-------------------------------------------------------------------------------------------
 
-mean_function(res_fa_tools$omega$Cmat) %>%
-  summarise(mean(Value), min(Value), max(Value))
+mean_function(res_fa_tools$sev$Cmat) %>%
+  summarise(round(mean(Value),2), round(min(Value),2), round(max(Value),2))
 
-plots_list = list(
-  type_b_plot(res_fa_tools$raudps$Cmat, "rAUDPS"),
-  type_b_plot(res_fa_tools$sev$Cmat, "SEV"),
-  type_b_plot(res_fa_tools$t50$Cmat, "T[50]"),
-  type_b_plot(res_fa_tools$omega$Cmat, "omega")
-)
+combined_plot = type_b_plot_upper_triangle(res_fa_tools$raudps$Cmat, "rAUDPS") +theme(legend.position = "none")+
+  type_b_plot_upper_triangle(res_fa_tools$sev$Cmat, "SEV") +theme(legend.position = "none")+
+  type_b_plot_upper_triangle(res_fa_tools$t50$Cmat, "T[50]") +theme(legend.position = "none")+
+  type_b_plot_upper_triangle(res_fa_tools$omega$Cmat, "omega") +
+  plot_annotation(tag_levels = 'A') &
+  theme(text = element_text(size = 14))
 
+combined_plot & plot_layout(guides = "collect")
 
-plot_grid(
-  wrap_plots(plots_list, ncol = 2)
-)
-
-ggsave("results/plots/fig2.tiff",width = 11,height = 11)
-
+ggsave("results/plots/fig2.tiff",width = 12.5,height = 11)
 
 
 ### Latent regressions --------------------------------------------------------------------------------------
@@ -159,9 +160,9 @@ write.csv(dt_plot1, "results/op_rsmd.csv", na = "")
 
 p1 = ggplot(dt_plot1, aes(x = ST, y = OP, color = CULT)) +
   geom_point(size = 2) +
-  geom_text(data = filter(dt_plot1, CULT %in% c("CP9606", "DG Shirley", "USG 3230", "Jamestown")), 
+  geom_text(data = filter(dt_plot1, CULT %in% c("TURBO", "DG Shirley", "USG 3230", "Jamestown")), 
             aes(label = CULT), size = 3.5, vjust = -0.5) +
-  scale_color_manual(values = c("CP9606" = "blue", "DG Shirley" = "black", "USG 3230" = "green", "Jamestown" = "purple")) +
+  scale_color_manual(values = c("TURBO" = "blue", "DG Shirley" = "black", "USG 3230" = "green", "Jamestown" = "purple")) +
   geom_vline(xintercept = 0, linetype = "dashed") +
   geom_hline(yintercept = 0, linetype = "dashed") +
   coord_cartesian(clip = "off") +
@@ -207,11 +208,11 @@ write.csv(dt_plot1, "results/eblup_L1.csv", na = "")
 p2 = dt_plot2 %>%
   group_by(VAR) %>%
   mutate(mean_loading = mean(L_1)) %>%
-  filter(CULT %in% c("CP9606", "DG Shirley", "USG 3230", "Jamestown")) %>%
+  filter(CULT %in% c("TURBO", "DG Shirley", "USG 3230", "Jamestown")) %>%
   ggplot(aes(x = L_1, y = marginal, color = CULT, group = CULT)) +
   geom_point(size = 2) +
   geom_smooth(method = lm, fill = NA, linewidth = 0.5) +
-  scale_color_manual(values = c("CP9606" = "blue", "DG Shirley" = "black", "USG 3230" = "green", "Jamestown" = "purple")) +
+  scale_color_manual(values = c("TURBO" = "blue", "DG Shirley" = "black", "USG 3230" = "green", "Jamestown" = "purple")) +
   guides(color = guide_legend(title.position = "top", title = "Cultivar"),
          shape = guide_legend(title.position = "top", title = "Region")) +
   scale_y_continuous(sec.axis = sec_axis(~., name = expression(paste("EBLUP")))) +
@@ -309,7 +310,7 @@ dat = bi_class(data %>%
                   mutate(ranking = rank(desc(marginal))), x = L_1, y =ranking  , style = "quantile", dim = 3)
 
 main = ggplot(dat) +
-  geom_tile(aes(reorder(SITE, -L_1), reorder(CULT, ranking), group = CULT, fill =bi_class)) +
+  geom_tile(aes(reorder(SITE, L_1), reorder(CULT, ranking), group = CULT, fill =bi_class)) +
   bi_scale_fill(pal = "DkViolet2", dim =3)+
   theme_bw() +
   guides(fill="none",alpha="none")+
@@ -323,7 +324,7 @@ main = ggplot(dat) +
 
 legend = bi_legend(pal = "DkViolet2",
                     dim = 3,
-                    xlab = "Higher first loading",
+                    xlab = "Higher SNB pressure",
                     ylab = "Higher ranks",
                     size = 10)
 
@@ -334,6 +335,6 @@ ggsave("results/plots/fig5.tiff",width =7,height = 4.5,units = "in",limitsize = 
 
 ### Ranking by cultivar
 
-a=data[data$CULT=="CP9606",]
+a=data[data$CULT=="TURBO",]
 colSums(table(a$SITE,a$ranking))
 

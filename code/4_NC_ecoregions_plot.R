@@ -10,7 +10,6 @@ pacman::p_load(ggplot2,   # must have pacman installed!
                rgdal,
                sf,
                ggspatial,
-               ggsn,
                cowplot,
                ggrepel,
                elevatr,
@@ -67,44 +66,33 @@ sites= sites %>%
                            str_detect(Sites, 'PY') ~ '× Middle Atlantic Coastal Plain'))
 
 
-# Make a map for legend ------------------------------------------------------------------------------------ 
-p1=ggplot() + 
-  geom_sf(data=nc_eco,aes(fill = US_L3NAME),linewidth=0.1,color = "black",alpha=0.4)+
-  geom_sf(data=nc_county,linewidth=0.05,color = "grey50",alpha=0.4)+
-  scale_fill_manual(values = setNames(region_colors, order))+
-  scale_shape_manual(values=c(1, 15))+
-  labs(fill = "Ecoregion") +
-  theme(plot.margin = margin(0, 0, 0, 0, "cm"),
-        plot.background = element_blank(),
-        plot.title.position = "plot",
-        legend.position = c(0.15, 0.22), 
-        legend.justification = "center",
-        legend.box.just = "center",
-        legend.margin = margin(0,0,0,0),
-        legend.text = element_text(size = 8))
-
-# Extract the colour legend - leg1
-legend1 = get_legend(p1)
-legend1_grid = cowplot::plot_grid(legend1, align = "v", nrow = 1)
 
 ### Make a plot with no legend ------------------------------------------------------------------------------------ 
-p3=ggplot() + 
-  geom_sf(data=nc_eco,aes(fill = US_L3NAME),linewidth=0.1,color = "black",alpha=0.4)+
-  geom_sf(data=nc_county,linewidth=0.05,color = "grey50",alpha=0.4)+
-  geom_point(data =  sites, aes(x = Lon, y = Lat,shape=as.factor(Region)),size = 2,position = position_dodge2(w = 0.4)) +
-  scale_fill_manual(values = setNames(region_colors, order))+
-  geom_label_repel(data =  sites, aes(x = Lon, y = Lat,label = Sites),box.padding = 0.7,position = position_dodge2(width = 0.4),segment.color = 'grey50',)+
-  scale_shape_manual(values=c(1, 4,15))+
-  xlab("Longitude") + ylab("Latitude")  +
-  annotation_scale(location = "br", width_hint = 0.3) + 
-  north(nc,location = "topleft",scale = 0.15)+
-  theme(plot.margin = margin(0, 0, 0, 0, "cm"),
-        plot.background = element_blank(),
-        plot.title.position = "plot",
-        legend.position =  "none")
+eco=ggplot() + 
+  geom_sf(data = nc_eco, aes(fill = US_L3NAME), linewidth = 0.1, color = "black", alpha = 0.4) +
+  geom_sf(data = nc_county, linewidth = 0.05, color = "grey50", alpha = 0.4) +
+  geom_point(data = sites, aes(x = Lon, y = Lat, shape = as.factor(Region)), size = 2, position = position_dodge2(w = 0.4)) +
+  scale_fill_manual(values = setNames(region_colors, order)) +
+  geom_label_repel(data = sites, aes(x = Lon, y = Lat, label = Sites), size = 3,box.padding = 0.7, position = position_dodge2(width = 0.4), segment.color = 'grey50') +
+  scale_shape_manual(values = c(1, 4, 15)) +
+  xlab("Longitude") + ylab("Latitude") +
+  guides(shape = "none") +
+  labs(fill = NULL) +
+  annotation_scale(location = "br", width_hint = 0.2) + 
+  annotation_north_arrow(location = "tl", which_north = "true", style = north_arrow_fancy_orienteering) + # From ggspatial
+  theme(
+    plot.margin = margin(0, 0, 0, 0, "cm"),
+    plot.background = element_blank(),
+    plot.title.position = "plot",
+    legend.position = c(0.15, 0.22),
+    legend.justification = "center",
+    legend.box.just = "center",
+    legend.margin = margin(0, 0, 0, 0),
+    legend.text = element_text(size = 6))
+
 
 ### Final plot ------------------------------------------------------------------------------------ 
-eco=p3 + annotation_custom(ggplotGrob(legend1_grid))
+eco
 ggsave("results/plots/locations.tiff",  width = 10, height = 5, units = "in", dpi = 300)
 
 

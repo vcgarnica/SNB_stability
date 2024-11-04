@@ -20,6 +20,7 @@ load("data/stability_final.RData")
 ### Rename and glimpse data
 data = stability_final 
 glimpse(data)
+write.csv(data,"data/stability_final.csv")
 
 ### Number of cultivars and environments  ------------------------------------------------------------------------------------- 
 num.cultivar = nlevels(data$CULT)
@@ -220,7 +221,6 @@ res_raudps = model_fit(response = "raudps",data)
 res_sev = model_fit(response = "sev",data)
 res_t50 = model_fit(response = "t50",data)
 res_omega = model_fit(response = "omega",data)
-
 
 ### Save --------------------------------------------------------------------------------
 
