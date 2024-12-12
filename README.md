@@ -52,7 +52,7 @@ SNB_stability/
 
 ### Step 0: Stability Parameters
 
-The `0_stability_parameters.R` script processes and analyzes data to assess cultivar stability through epidemiological metrics and disease progression models using the `raw_stability.RData` file. First, **sev ** is created using the last disease assessment for each experimental unit. Second, **rAUDPS** is generated using the audps function from agricolae R package. Third, three non-linear population growth models (Monomolecular, Logistic, and Gompertz) are fitted to disease incidence data. Both **omega** and **T_50** are estimated from the best fitting model. Results are saved on the file `stability_final.RData` for use in the next step.
+The `0_stability_parameters.R` script processes and analyzes data to assess cultivar stability through epidemiological metrics and disease progression models using the `raw_stability.RData` file. First, **sev** is created using the last disease assessment for each experimental unit. Second, **rAUDPS** is generated using the audps function from agricolae R package. Third, three non-linear population growth models (Monomolecular, Logistic, and Gompertz) are fitted to disease incidence data. Both **omega** and **T_50** are estimated from the best fitting model at each experimental unit. Results are saved on the file `stability_final.RData` for use in the next step.
 
 ### Step 1: Stability Analysis
 
@@ -68,9 +68,9 @@ Results are visualized using the `3_plots.R` script, which generates plots for d
 
 ## References
 
-* Smith, A.B., Ganesalingam, A., Kuchel, H., et al. (2015). Factor analytic mixed models for the provision of grower information from national crop variety testing programs. Theoretical and Applied Genetics, 128, 55–72.
+* Smith, A.B., Ganesalingam, A., Kuchel, H. and Cullis, B.R., 2015. Factor analytic mixed models for the provision of grower information from national crop variety testing programs. Theoretical and applied genetics, 128, pp.55-72.
 
-* Chaves, S.F.S., Evangelista, J.S.P.C., Trindade, R.S., Dias, L.A.S., Guimarães, P.E., Guimarães, L.J.M., Alves, R.S., Bhering, L.L., & Dias, K.O.G. (2023). Employing factor analytic tools for selecting high-performance and stable tropical maize hybrids. Crop Science, 63, 1114–1125.
+* Chaves, S.F., Evangelista, J.S., Trindade, R.S., Dias, L.A., Guimarães, P.E., Guimarães, L.J., Alves, R.S., Bhering, L.L. and Dias, K.O., 2023. Employing factor analytic tools for selecting high‐performance and stable tropical maize hybrids. Crop Science, 63(3), pp.1114-1125.
 
 
 
