@@ -52,16 +52,18 @@ type_b_plot_upper_triangle = function(correlation_matrix, var_name) {
     filter(as.numeric(Row) < as.numeric(Column))
  
   heatmap_df_long$VAR = var_name
-  
 
-  ggplot(heatmap_df_long, aes(x = Row, y = Column, fill = Value, label = round(Value, 2))) +
+    ggplot(heatmap_df_long, aes(x = Row, y = Column, fill = Value, label = round(Value, 2))) +
     geom_tile(color = "white") +
-    scale_fill_gradientn(colors = c("#2C7BB6", "#FFFFBF", "#D7191C"),
+    scale_fill_gradientn(colors = c("#8c8a6c","#b59a7a","#cbb89f" ,"#d3d3d3","#8fb1c2" ,"#488fb0" ,"#311e3b"),
+#   scale_fill_gradientn(colors = c("#8c8a6c","#b59a7a" ,"#d3d3d3","#8fb1c2" ,"#488fb0" ),
+#   scale_fill_gradientn(colors = c( "#9e3547","#ba8890" ,"#d3d3d3" ,"#4279b0" ,"#3a4e78" ),
+#      scale_fill_gradientn(colors = c( "#9e3547", "#ba8890", "#d3d3d3","#4279b0","#311e3b"),
                          values = scales::rescale(c(-1, 1)),
-                         breaks = c(-1, -0.5, 0, 0.5, 1),
+                         breaks = c(-1, 0,  1),
                          limits = c(-1, 1),
                          na.value = "white") +
-    geom_text(color = "gray30", size = 2.3, fontface = "bold") +
+    geom_text(color = "white", size = 2.3, fontface = "bold") +
     theme_bw() +
     theme(axis.text.x = element_text(size = 11, angle = 45, hjust = 1),
           axis.text.y = element_text(size = 11),
@@ -69,11 +71,23 @@ type_b_plot_upper_triangle = function(correlation_matrix, var_name) {
           axis.title = element_blank(),
           plot.title = element_text(size = 15),
           strip.text = element_text(size = 15, hjust = 0)) +
-    labs(fill = "Correlation")
+    labs(fill = expression(italic(hat(r)[g])))
 }
 
 
-
+custom_pal3 <- c(
+  "1-1" = "#cbb89f", # low x, medium y (light tan)
+  "2-1" = "#b59a7a", # medium x, medium y (warm beige)
+  "3-1" = "#8c8a6c", # high x, medium y (muted mauve)
+  
+  "1-2" = "#c7c7c7", # low x, low y (subtly darker gray)
+  "2-2" = "#d6b8b5", # medium x, low y (soft pink-beige with a gray tint)
+  "3-2" = "#7a6b84", # high x, low y (muted rose)
+  
+  "1-3" = "#8fb9d6", # low x, high y (light blue)
+  "2-3" = "#4279b0",# medium x, high y (soft sky blue)
+  "3-3" = "#311e3b"  # high x, high y (medium blue)
+)
 optimize_join = function(data, var_name) {
   data$OP %>%
     left_join(data$ST, by = "CULT") %>%
@@ -119,8 +133,9 @@ write.csv(expvar_data, "results/exp_var.csv", na = "")
 mean_function(res_fa_tools$sev$Cmat) %>%
   summarise(round(mean(Value),2), round(min(Value),2), round(max(Value),2))
 
-combined_plot = type_b_plot_upper_triangle(res_fa_tools$raudps$Cmat, "rAUDPS") +theme(legend.position = "none")+
+combined_plot = 
   type_b_plot_upper_triangle(res_fa_tools$sev$Cmat, "SEV") +theme(legend.position = "none")+
+  type_b_plot_upper_triangle(res_fa_tools$raudps$Cmat, "rAUDPS") +theme(legend.position = "none")+
   type_b_plot_upper_triangle(res_fa_tools$t50$Cmat, "T[50]") +theme(legend.position = "none")+
   type_b_plot_upper_triangle(res_fa_tools$omega$Cmat, "omega") +
   plot_annotation(tag_levels = 'A') &
@@ -154,15 +169,17 @@ dt_plot1 %>%
 
 # Prepare Data for OP versus RMSD Plot
 dt_plot1 = dt_plot1 %>%
-  mutate(VAR = factor(VAR, levels = c("rAUDPS", "SEV", "T[50]", "omega")))
+  mutate(VAR = factor(VAR, levels = c("SEV","rAUDPS",  "T[50]", "omega")))
 
 write.csv(dt_plot1, "results/op_rsmd.csv", na = "")
 
+
 p1 = ggplot(dt_plot1, aes(x = ST, y = OP, color = CULT)) +
-  geom_point(size = 2) +
+  geom_point(size = 3.7,alpha=0.75) +
   geom_text(data = filter(dt_plot1, CULT %in% c("TURBO", "DG Shirley", "USG 3230", "Jamestown")), 
-            aes(label = CULT), size = 3.5, vjust = -0.5) +
-  scale_color_manual(values = c("TURBO" = "blue", "DG Shirley" = "black", "USG 3230" = "green", "Jamestown" = "purple")) +
+            aes(label = CULT), size = 4, vjust = -0.5) +
+ # scale_color_manual(values = c("TURBO" = "blue", "DG Shirley" = "black", "USG 3230" = "green", "Jamestown" = "purple")) +
+  scale_color_manual(values = c("TURBO" = "#7a6b84", "Jamestown" = "#8c8a6c", "USG 3230" =  "#488fb0", "DG Shirley" = "#311e3b")) +
   geom_vline(xintercept = 0, linetype = "dashed") +
   geom_hline(yintercept = 0, linetype = "dashed") +
   coord_cartesian(clip = "off") +
@@ -190,15 +207,15 @@ res_fa_tools$omega$blups$VAR = as.factor("omega")
 
 # Prepare Data for EBLUP versus FA1
 dt_plot2 = rbind(
+ res_fa_tools$sev$blups,
  res_fa_tools$raudps$blups,
-  res_fa_tools$sev$blups,
   res_fa_tools$t50$blups,
   res_fa_tools$omega$blups
 )
 
 dt_plot2$VAR = factor(dt_plot2$VAR,levels = c(
-  "rAUDPS", 
   "SEV", 
+  "rAUDPS", 
   "T[50]",
   "omega"))
 
@@ -210,9 +227,10 @@ p2 = dt_plot2 %>%
   mutate(mean_loading = mean(L_1)) %>%
   filter(CULT %in% c("TURBO", "DG Shirley", "USG 3230", "Jamestown")) %>%
   ggplot(aes(x = L_1, y = marginal, color = CULT, group = CULT)) +
-  geom_point(size = 2) +
-  geom_smooth(method = lm, fill = NA, linewidth = 0.5) +
-  scale_color_manual(values = c("TURBO" = "blue", "DG Shirley" = "black", "USG 3230" = "green", "Jamestown" = "purple")) +
+  geom_point(size = 3.7,alpha=0.6) +
+  geom_smooth(method = lm, fill = NA, linewidth = 0.7,alpha = 0.5) +
+ # scale_color_manual(values = c("TURBO" = "blue", "DG Shirley" = "black", "USG 3230" = "green", "Jamestown" = "purple")) +
+  scale_color_manual(values = c("TURBO" = "#7a6b84", "Jamestown" = "#8c8a6c", "USG 3230" =  "#488fb0", "DG Shirley" = "#311e3b")) +
   guides(color = guide_legend(title.position = "top", title = "Cultivar"),
          shape = guide_legend(title.position = "top", title = "Region")) +
   scale_y_continuous(sec.axis = sec_axis(~., name = expression(paste("EBLUP")))) +
@@ -275,33 +293,35 @@ data = data %>%
   group_by(resistance, SITE) %>%
   mutate(class_rank = mean(ranking, na.rm = TRUE))
 
-### Disease Susceptibility Rankings Plot ------------------------------------------------------------------------------------ 
 
+### Disease Susceptibility Rankings Plot ------------------------------------------------------------------------------------ 
 data %>%
   ggplot(aes(x = reorder(SITE, -GEI))) +
-  geom_line(aes(y = class_rank, group = resistance, linetype = resistance), linewidth = 1.2) +
-  geom_line(aes(y = ranking, group = CULT, linetype = resistance), alpha = 0.08) +
+  geom_line(aes(y = class_rank, group = resistance, color=resistance,linetype=resistance),linewidth = 1.2) +
+  geom_line(aes(y = ranking, group = CULT,color=resistance,linetype=resistance),linewidth = 0.5,alpha=0.1) +
   theme_bw() +
   scale_y_reverse() +
-  scale_linetype_manual(values = c("solid","dotdash","dotted" )) +  
+  scale_color_manual(values = c("#8c8a6c", "#ba8890","#488fb0"))+
   labs(
     y = "EBLUP rank",
     x = "Environment (lower to higher GEI)",
-    linetype = "Cultivar reaction"
+    color = "Cultivar Reaction", linetype = "Cultivar Reaction"
   ) +
   theme(
-    axis.title.x = element_text(size = 12, margin = margin(t = 10)),
-    axis.text.x = element_text(size = 8, angle = 45, hjust = 1),
-    axis.title.y = element_text(size = 12, margin = margin(r = 10)),
+    axis.title.x = element_text(size = 8, margin = margin(t = 10)),
+    axis.text.x = element_text(size = 6, angle = 45, hjust = 1),
+    axis.title.y = element_text(size = 8, margin = margin(r = 6)),
+    axis.text.y = element_text(size = 6, margin = margin(r = 6)),
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
     legend.key.size = unit(1.5, "lines"),  
-    legend.text = element_text(size = 11),  
+    legend.text = element_text(size = 7),  
     legend.spacing.y = unit(0.5, "cm"), 
-    legend.title = element_text(size = 13)  
+    legend.title = element_text(size = 8)  
   )
 
-ggsave("results/plots/fig4.tiff",width =7.,height = 4.5,units = "in",limitsize = FALSE)
+
+ggsave("results/plots/fig4.tiff",width =5,height = 3.2,units = "in",limitsize = FALSE)
 
 ### Overall rankings
 
@@ -309,9 +329,27 @@ dat = bi_class(data %>%
                   group_by(SITE) %>%
                   mutate(ranking = rank(desc(marginal))), x = L_1, y =ranking  , style = "quantile", dim = 3)
 
+
+custom_pal3 <- c(
+  "1-1" = "#cbb89f", # low x, medium y (light tan)
+  "2-1" = "#b59a7a", # medium x, medium y (warm beige)
+  "3-1" = "#8c8a6c", # high x, medium y (muted mauve)
+  
+  "1-2" = "#e0e0e0", # low x, low y (subtly darker gray)
+  "2-2" = "#d6b8b5", # medium x, low y (soft pink-beige with a gray tint)
+  "3-2" = "#7a6b84", # high x, low y (muted rose)
+  
+  "1-3" = "#8fb9d6", # low x, high y (light blue)
+  "2-3" = "#4279b0",# medium x, high y (soft sky blue)
+  "3-3" = "#311e3b"  # high x, high y (medium blue)
+)
+
+bi_pal(pal = custom_pal3, dim = 3,flip_axes = TRUE, rotate_pal = TRUE)
+
+
 main = ggplot(dat) +
-  geom_tile(aes(reorder(SITE, L_1), reorder(CULT, ranking), group = CULT, fill =bi_class)) +
-  bi_scale_fill(pal = "DkViolet2", dim =3)+
+  geom_tile(aes(reorder(SITE,L_1), reorder(CULT, ranking), group = CULT, fill =bi_class)) +
+  bi_scale_fill(pal = custom_pal3, dim =3, flip_axes = TRUE, rotate_pal = TRUE)+
   theme_bw() +
   guides(fill="none",alpha="none")+
   labs(y = "Cultivar", x = "Environment", fill = "Rank") +
@@ -322,16 +360,15 @@ main = ggplot(dat) +
         panel.grid.minor = element_blank())
 
 
-legend = bi_legend(pal = "DkViolet2",
-                    dim = 3,
-                    xlab = "Higher SNB pressure",
-                    ylab = "Higher ranks",
+legend = bi_legend(pal = custom_pal3,flip_axes = F,
+                    dim = 3, 
+                    xlab = "Higher \u03BB\u2081",
+                    ylab = "Higher EBLUP ranks",
                     size = 10)
 
 main + legend + plot_layout(ncol =  2,widths =  c(1,0.3))
 
 ggsave("results/plots/fig5.tiff",width =7,height = 4.5,units = "in",limitsize = FALSE)
-
 
 ### Ranking by cultivar
 
